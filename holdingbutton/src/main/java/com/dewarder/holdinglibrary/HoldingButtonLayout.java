@@ -155,6 +155,18 @@ public class HoldingButtonLayout extends FrameLayout {
                 mHoldingDrawable.setColor(array.getColor(R.styleable.HoldingButtonLayout_hbl_color, 0));
             }
 
+            if (array.hasValue(R.styleable.HoldingButtonLayout_hbl_start_color) && array.hasValue(R.styleable.HoldingButtonLayout_hbl_end_color)) {
+                mHoldingDrawable.setGradientColors(
+                        array.getColor(R.styleable.HoldingButtonLayout_hbl_start_color, 0),
+                        array.getColor(R.styleable.HoldingButtonLayout_hbl_end_color, 0));
+            }
+
+            if (array.hasValue(R.styleable.HoldingButtonLayout_hbl_start_cancel_color) && array.hasValue(R.styleable.HoldingButtonLayout_hbl_end_cancel_color)) {
+                mHoldingDrawable.setCancelGradientColors(
+                        array.getColor(R.styleable.HoldingButtonLayout_hbl_start_cancel_color, 0),
+                        array.getColor(R.styleable.HoldingButtonLayout_hbl_end_cancel_color, 0));
+            }
+
             if (array.hasValue(R.styleable.HoldingButtonLayout_hbl_cancel_color)) {
                 mHoldingDrawable.setCancelColor(array.getColor(R.styleable.HoldingButtonLayout_hbl_cancel_color, 0));
             }
@@ -355,12 +367,20 @@ public class HoldingButtonLayout extends FrameLayout {
     }
 
     @ColorInt
-    public int getColor() {
+    public int getGradientColors() {
         return mHoldingDrawable.getColor();
     }
 
     public void setColor(@ColorInt int color) {
         mHoldingDrawable.setColor(color);
+    }
+
+    public int[] getGradientColor() {
+        return mHoldingDrawable.getGradientColors();
+    }
+
+    public void setGradientColors(@ColorInt int colorFrom, @ColorInt int colorTo) {
+        mHoldingDrawable.setGradientColors(colorFrom, colorTo);
     }
 
     @ColorInt
@@ -370,6 +390,14 @@ public class HoldingButtonLayout extends FrameLayout {
 
     public void setCancelColor(@ColorInt int color) {
         mHoldingDrawable.setCancelColor(color);
+    }
+
+    public int[] getCancelGradientColor() {
+        return mHoldingDrawable.getCancelGradientColors();
+    }
+
+    public void setCancelGradientColors(@ColorInt int colorFrom, @ColorInt int colorTo) {
+        mHoldingDrawable.setCancelGradientColors(colorFrom, colorTo);
     }
 
     @FloatRange(from = 0, to = 1)

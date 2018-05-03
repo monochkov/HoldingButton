@@ -24,6 +24,7 @@ import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
@@ -72,18 +73,29 @@ public class HoldingDrawable extends Drawable {
     private float[] mIconScaleFactor = {1f};
     private float[] mExpandedScaleFactor = {0f};
 
-    private int mDefaultColor = Color.parseColor("#3949AB");
-    private int mCancelColor = Color.parseColor("#e53935");
+    private int[] mDefaultColors = {
+            Color.parseColor("#3949AB"),
+            Color.parseColor("#3949AB")
+    };
+    private LinearGradient mDefaultColorGradient;
+    private int[] mCancelColors = {
+            Color.parseColor("#e53935"),
+            Color.parseColor("#e53935")
+    };
+    private LinearGradient mCancelColorGradient;
     private int mSecondAlpha = 100;
 
     private HoldingDrawableListener mListener;
 
     {
+        updateDefaultColorGradient();
+        updateCancelColorGradient();
+
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaint.setColor(mDefaultColor);
+        mPaint.setShader(mDefaultColorGradient);
 
         mSecondPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mSecondPaint.setColor(mDefaultColor);
+        mSecondPaint.setShader(mDefaultColorGradient);
         mSecondPaint.setAlpha(mSecondAlpha);
     }
 
@@ -170,8 +182,8 @@ public class HoldingDrawable extends Drawable {
     public void reset() {
         mIsExpanded = false;
         mIsCancel = false;
-        mPaint.setColor(mDefaultColor);
-        mSecondPaint.setColor(mDefaultColor);
+        mPaint.setShader(mDefaultColorGradient);
+        mSecondPaint.setShader(mDefaultColorGradient);
         mSecondPaint.setAlpha(mSecondAlpha);
     }
 
@@ -203,14 +215,32 @@ public class HoldingDrawable extends Drawable {
 
     @ColorInt
     public int getColor() {
-        return mDefaultColor;
+        return mDefaultColors[0];
     }
 
     public void setColor(@ColorInt int color) {
-        mDefaultColor = color;
+        mDefaultColors[0] = color;
+        mDefaultColors[1] = color;
+        updateDefaultColorGradient();
         if (!mIsCancel) {
-            mPaint.setColor(color);
-            mSecondPaint.setColor(color);
+            mPaint.setShader(mDefaultColorGradient);
+            mSecondPaint.setShader(mDefaultColorGradient);
+            mSecondPaint.setAlpha(mSecondAlpha);
+        }
+        invalidateSelf();
+    }
+
+    public int[] getGradientColors() {
+        return mDefaultColors;
+    }
+
+    public void setGradientColors(@ColorInt int colorFrom, @ColorInt int colorTo) {
+        mDefaultColors[0] = colorFrom;
+        mDefaultColors[1] = colorTo;
+        updateDefaultColorGradient();
+        if (!mIsCancel) {
+            mPaint.setShader(mDefaultColorGradient);
+            mSecondPaint.setShader(mDefaultColorGradient);
             mSecondPaint.setAlpha(mSecondAlpha);
         }
         invalidateSelf();
@@ -218,13 +248,31 @@ public class HoldingDrawable extends Drawable {
 
     @ColorInt
     public int getCancelColor() {
-        return mCancelColor;
+        return mCancelColors[0];
     }
 
     public void setCancelColor(int color) {
-        mCancelColor = color;
+        mCancelColors[0] = color;
+        mCancelColors[1] = color;
+        updateCancelColorGradient();
         if (mIsCancel) {
-            mPaint.setColor(color);
+            mPaint.setShader(mCancelColorGradient);
+        }
+        invalidateSelf();
+    }
+
+    public int[] getCancelGradientColors() {
+        return mCancelColors;
+    }
+
+    public void setCancelGradientColors(@ColorInt int colorFrom, @ColorInt int colorTo) {
+        mCancelColors[0] = colorFrom;
+        mCancelColors[1] = colorTo;
+        updateCancelColorGradient();
+        if (!mIsCancel) {
+            mPaint.setShader(mCancelColorGradient);
+            mSecondPaint.setShader(mCancelColorGradient);
+            mSecondPaint.setAlpha(mSecondAlpha);
         }
         invalidateSelf();
     }
@@ -291,6 +339,14 @@ public class HoldingDrawable extends Drawable {
         mListener = listener;
     }
 
+    private void updateDefaultColorGradient() {
+        mDefaultColorGradient = new LinearGradient(0, 0, getIntrinsicWidth(), getIntrinsicHeight(), mDefaultColors[0], mDefaultColors[1], Shader.TileMode.REPEAT);
+    }
+
+    private void updateCancelColorGradient() {
+        mCancelColorGradient = new LinearGradient(0, 0, getIntrinsicWidth(), getIntrinsicHeight(), mCancelColors[0], mCancelColors[1], Shader.TileMode.REPEAT);
+    }
+
     private void invalidateMatrix(Matrix matrix, float centerX, float centerY, float width, float height) {
         matrix.reset();
         matrix.setScale(mIconScaleFactor[0], mIconScaleFactor[0]);
@@ -341,15 +397,19 @@ public class HoldingDrawable extends Drawable {
     }
 
     private ValueAnimator createCancelValueAnimator() {
-        final int from = mIsCancel ? mDefaultColor : mCancelColor;
-        final int to = mIsCancel ? mCancelColor : mDefaultColor;
+        final int startColorFrom = mIsCancel ? mDefaultColors[0] : mCancelColors[0];
+        final int startColorTo = mIsCancel ? mCancelColors[0] : mDefaultColors[0];
+        final int endColorFrom = mIsCancel ? mDefaultColors[1] : mCancelColors[1];
+        final int endColorTo = mIsCancel ? mCancelColors[1] : mDefaultColors[1];
         ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator a) {
-                int color = ColorHelper.blend(from, to, (float) a.getAnimatedValue());
-                mPaint.setColor(color);
-                mSecondPaint.setColor(color);
+                int startColor = ColorHelper.blend(startColorFrom, startColorTo, (float) a.getAnimatedValue());
+                int endColor = ColorHelper.blend(endColorFrom, endColorTo, (float) a.getAnimatedValue());
+                LinearGradient gradient = new LinearGradient(0, 0, getIntrinsicWidth(), getIntrinsicHeight(), startColor, endColor, Shader.TileMode.REPEAT);
+                mPaint.setShader(gradient);
+                mSecondPaint.setShader(gradient);
                 mSecondPaint.setAlpha(mSecondAlpha);
                 invalidateSelf();
             }
